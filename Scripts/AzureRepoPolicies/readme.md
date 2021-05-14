@@ -18,7 +18,7 @@ Steps:
 1. Create the new Branch via the portal
 2. In this directory (Infrastructure repo) run the following:
 ```bash
-.\copyPolicy.sh ChildcareOfferWales sprint-12 sprint-13
+.\copyPolicy.sh MyRepo sprint-12 sprint-13
 ```
 The parameters are: 
  * repository name
