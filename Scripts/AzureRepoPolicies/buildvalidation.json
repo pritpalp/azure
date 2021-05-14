@@ -1,0 +1,21 @@
+{
+    "isEnabled": true,
+    "isBlocking": true,
+    "type": {
+      "id": ""
+    },
+    "settings": {
+        "buildDefinitionId": "value",
+        "displayName": "Secret Scanning",
+        "manualQueueOnly": false,
+        "queueOnSourceUpdateOnly": true,
+        "scope": [
+          {
+            "matchKind": "Exact",
+            "refName": "refs/heads/policytest",
+            "repositoryId": ""
+          }
+        ],
+        "validDuration": 720.0
+  }
+}

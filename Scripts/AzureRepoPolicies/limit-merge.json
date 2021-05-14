@@ -1,0 +1,17 @@
+{
+    "isEnabled": true,
+    "isBlocking": true,
+    "type": {
+      "id": ""
+    },
+    "settings": {
+      "allowSquash": true,
+      "scope": [
+        {
+          "repositoryId": "",
+          "refName": "refs/heads/policytest",
+          "matchKind": "exact"
+        }
+      ]
+    }
+  }
