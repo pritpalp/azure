@@ -4,31 +4,45 @@
 # Note that the setting is in preview, so values may change
 # 
 # Inputs:
-# Setting name
-# Webapp name
 # Resource Group
-# Subscription Id
+# Subscription ID
+# Workspace Name
+# Workspace Resource Group
 #
 # Example:
-# ./set_diagnostic.sh my_diag_logs myapp myresourcegrp subscription_id
-# TODO - loop through the webapps in a resource group and aaply to all rather than individual apps
+# ./set_diagnostic.sh my_resource_grp sub_id workspace_name workspace_resource_grp
 
-# Need to have four parameters, a name for the setting, the webapp name, resource group and the subscription id
+# Need to have four parameters, resource group, subscription id, workspace name, workspace resource group
 if [[ $# -eq 0 ]]; then
-  echo "Enter the following parameters in order: a name for the setting, the webapp name, resource group and the subscription id"
+  echo "Enter the following parameters in order: resource group, subscription id, workspace name, workspace resource group"
   exit 1
 fi
 
-settingname=$1
-webapp=$2
-resourcegroup=$3
-subscriptionid=$4
-resourceid=/subscriptions/$subscriptionid/resourceGroups/$resourcegroup/providers/Microsoft.Web/sites/$webapp
-workspaceid=/subscriptions/$subscriptionid/resourcegroups/ccow-mgmt/providers/microsoft.operationalinsights/workspaces/ccow-management
+resourcegroup=$1
+subscriptionId=$2
+workspaceName=$3
+workspaceRG=$4
 
-az monitor diagnostic-settings create \
-  --name $settingname \
-  --resource $resourceid \
-  --workspace $workspaceid \
-  --logs '[{"category": "AppServiceHTTPLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServiceAntivirusScanAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServiceConsoleLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServiceAppLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServiceFileAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServiceAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServiceIPSecAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}},{"category": "AppServicePlatformLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 90}}]' \
-  --metrics '[{"category": "AllMetrics","enabled": true,"retentionPolicy": {"days": 90,"enabled": true}}]'
+# Lets get a list of all the webapps
+appList=$(az webapp list --resource-group $resourcegroup --query "[].name" --output tsv)
+
+# Now we can go through the list and create the diagnostic setting
+IFS=$'\n' 
+array=($appList)
+for i in "${array[@]}"
+do
+    settingName=$resourcegroup-$i
+    webapp=$i
+
+    resourceId=/subscriptions/$subscriptionId/resourceGroups/$resourcegroup/providers/Microsoft.Web/sites/$webapp
+    workspaceId=/subscriptions/$subscriptionId/resourcegroups/$workspaceRG/providers/microsoft.operationalinsights/workspaces/$workspaceName
+
+    # Note that the values in logs and metrics were found via the portal and the diagnostic setting is marked as "preview"
+    # 30 day retention policy is set for all values, but this can be changed as required
+    az monitor diagnostic-settings create \
+      --name $settingName \
+      --resource $resourceId \
+      --workspace $workspaceId \
+      --logs '[{"category": "AppServiceHTTPLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServiceAntivirusScanAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServiceConsoleLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServiceAppLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServiceFileAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServiceAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServiceIPSecAuditLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}},{"category": "AppServicePlatformLogs","enabled": true,"retentionPolicy": {"enabled": true,"days": 30}}]' \
+      --metrics '[{"category": "AllMetrics","enabled": true,"retentionPolicy": {"days": 30,"enabled": true}}]'
+done
