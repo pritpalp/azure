@@ -1,0 +1,100 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "webapps": {
+            "type":"array",
+            "metadata": {
+                "description": "This array contains webapp details and settings"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "alwaysOn": {
+            "type": "bool"
+        },
+        "instrumentationkey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "App Insights key. This value to populated in pipeline"
+            }
+        },
+        "appconfigconnectionstring": {
+            "type": "securestring",
+            "metadata": {
+                "description": "App Config connection string. This value to populated in pipeline"
+            }
+        },
+        "custom-domain": {
+            "type": "string"
+        },
+        "cert-thumbprint": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The thumbprint of the SSL certificate to use. This value to populated in pipeline"
+            }
+        }
+    },
+    "variables": {   
+        "appconfigurationappsetting": [{
+            "name": "ConnectionStrings:AppConfig",
+            "value": "[parameters('appconfigconnectionstring')]"
+        }],        
+        "instrumentationkeyappsetting": [{
+            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+            "value": "[parameters('instrumentationkey')]"            
+        }]    
+    },
+    "resources": [
+        {
+            "copy": {
+                "name": "CreateWebApps",
+                "count": "[length(parameters('webapps'))]"
+            },
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('webapps')[copyIndex()].name]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('webapps')[copyIndex()].resourceTags]",
+            "dependsOn": [
+
+            ],
+            "properties": {
+                "name": "[parameters('webapps')[copyIndex()].name]",
+                "siteConfig": {
+                    "appSettings": "[concat(parameters('webapps')[copyIndex()].appsettings, variables('instrumentationkeyappsetting'), variables('appconfigurationappsetting'))]",
+                    "alwaysOn": "[parameters('alwaysOn')]"
+                },
+                "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('webapps')[copyIndex()].aspresourcegroup, '/providers/Microsoft.Web/serverfarms/', parameters('webapps')[copyIndex()].appserviceplan)]",
+                "clientAffinityEnabled": false,
+                "httpsOnly": true,
+                "minTlsVersion": "1.2",
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('webapps')[copyIndex()].name, '.', parameters('custom-domain'))]",
+                        "sslState": "SniEnabled",
+                        "thumbprint": "[parameters('cert-thumbprint')]",
+                        "hostType": "Standard"
+                    }
+                ]
+            },
+            "resources": [
+               {
+                    "type": "Microsoft.Web/sites/hostnameBindings",
+                    "name": "[concat(parameters('webapps')[copyIndex()].name, '/', parameters('webapps')[copyIndex()].name, '.', parameters('custom-domain'))]",
+                    "apiVersion": "2019-08-01",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "sslState": "SniEnabled",
+                        "thumbprint": "[parameters('cert-thumbprint')]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('webapps')[copyIndex()].name)]"
+                    ]
+               }
+            ]
+        }
+    ]
+}

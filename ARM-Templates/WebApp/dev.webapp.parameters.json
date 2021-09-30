@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "webapps": {
+            "value": [
+                {
+                    "name": "dev-myportal-app",
+                    "appsettings": [
+                    ],
+                    "appserviceplan": "app-service-plan-name",
+                    "aspresourcegroup": "Generic",
+                    "resourceTags": {
+                        "Environment": "Dev",
+                        "Business Unit": "Test",
+                        "Region": "UKSouth",
+                        "Service": "Portal"
+                    }
+                },
+                {
+                    "name": "dev-myadmin-app",
+                    "appsettings": [
+                    ],
+                    "appserviceplan": "app-service-plan-name",
+                    "aspresourcegroup": "Generic",
+                    "resourceTags": {
+                        "Environment": "Dev",
+                        "Business Unit": "Test",
+                        "Region": "UKSouth",
+                        "Service": "AdminSite"
+                    }
+                }
+            ]
+        },
+        "custom-domain": {
+            "value": "mydomain.co"
+        },
+        "alwaysOn": {
+            "value": true
+        }
+    }
+}
